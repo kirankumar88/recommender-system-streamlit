@@ -4,17 +4,13 @@ import os
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
 
-# ---------------------------
-# Page Config
-# ---------------------------
+# Page config
 st.set_page_config(page_title="Animation Movie Recommender", layout="wide")
 
 st.title("🎬 Animation Movie Recommendation System")
 st.write("Content-Based Recommendation using Cosine Similarity")
 
-# ---------------------------
-# Load Data
-# ---------------------------
+# Load data
 @st.cache_data
 def load_data():
     data_path = os.path.join("data", "data.csv")
@@ -27,13 +23,13 @@ def load_data():
     df['episodes'] = df['episodes'].fillna(0)
     df['genre'] = df['genre'].fillna("Unknown")
 
+    df = df.reset_index(drop=True)
+
     return df
 
 df = load_data()
 
-# ---------------------------
-# Build Similarity Matrix
-# ---------------------------
+# Build similarity matrix
 @st.cache_data
 def build_similarity(df):
     features = df[['rating', 'episodes']]
@@ -44,33 +40,21 @@ def build_similarity(df):
 
 similarity_matrix = build_similarity(df)
 
-# ---------------------------
-# Recommendation Function
-# ---------------------------
+# Recommendation function
 def recommend(anime_name):
-    try:
-        idx = df.index[df['name'] == anime_name].tolist()[0]
+    idx = df[df['name'] == anime_name].index[0]
+    sim_scores = list(enumerate(similarity_matrix[idx]))
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:6]
+    anime_indices = [i[0] for i in sim_scores]
+    return df['name'].iloc[anime_indices]
 
-        sim_scores = list(enumerate(similarity_matrix[idx]))
-        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-        sim_scores = sim_scores[1:6]
-
-        anime_indices = [i[0] for i in sim_scores]
-
-        return df['name'].iloc[anime_indices]
-    except:
-        return []
-
-# ---------------------------
 # Sidebar
-# ---------------------------
 st.sidebar.title("📊 Top Rated Animation Movies")
 top_anime = df.sort_values(by="rating", ascending=False).head(5)
 st.sidebar.dataframe(top_anime[['name', 'rating']])
 
-# ---------------------------
 # Main UI
-# ---------------------------
 anime_list = df['name'].dropna().unique()
 selected_anime = st.selectbox("Select Animation Movie", anime_list)
 
@@ -82,12 +66,7 @@ with col1:
     st.dataframe(anime_details)
 
 with col2:
-    if st.button("🔍 Recommend Similar Movies"):
-        recommendations = recommend(selected_anime)
-
-        if len(recommendations) > 0:
-            st.subheader("⭐ Recommended Animation Movies")
-            for anime in recommendations:
-                st.success(anime)
-        else:
-            st.warning("No recommendations found.")
+    st.subheader("⭐ Recommended Animation Movies")
+    recommendations = recommend(selected_anime)
+    for anime in recommendations:
+        st.success(anime)
