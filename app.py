@@ -4,11 +4,9 @@ import os
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
 
-# Page config
 st.set_page_config(page_title="Animation Movie Recommender", layout="wide")
 
-st.title("🎬 Animation Movie Recommendation System")
-st.write("Content-Based Recommendation using Cosine Similarity")
+st.title("Animation Movie Recommendation System")
 
 # Load data
 @st.cache_data
@@ -29,7 +27,9 @@ def load_data():
 
 df = load_data()
 
-# Build similarity matrix
+st.write("Dataset loaded:", df.shape)
+
+# Build similarity
 @st.cache_data
 def build_similarity(df):
     features = df[['rating', 'episodes']]
@@ -40,33 +40,29 @@ def build_similarity(df):
 
 similarity_matrix = build_similarity(df)
 
-# Recommendation function
-def recommend(anime_name):
-    idx = df[df['name'] == anime_name].index[0]
-    sim_scores = list(enumerate(similarity_matrix[idx]))
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-    sim_scores = sim_scores[1:6]
-    anime_indices = [i[0] for i in sim_scores]
-    return df['name'].iloc[anime_indices]
+st.write("Similarity matrix shape:", similarity_matrix.shape)
 
-# Sidebar
-st.sidebar.title("📊 Top Rated Animation Movies")
-top_anime = df.sort_values(by="rating", ascending=False).head(5)
-st.sidebar.dataframe(top_anime[['name', 'rating']])
-
-# Main UI
+# Dropdown
 anime_list = df['name'].dropna().unique()
 selected_anime = st.selectbox("Select Animation Movie", anime_list)
 
-col1, col2 = st.columns(2)
+st.write("Selected:", selected_anime)
 
-with col1:
-    st.subheader("🎥 Selected Animation Details")
-    anime_details = df[df['name'] == selected_anime][['genre', 'rating', 'episodes']]
-    st.dataframe(anime_details)
+# Recommendation
+try:
+    idx = df[df['name'] == selected_anime].index[0]
+    st.write("Index:", idx)
 
-with col2:
-    st.subheader("⭐ Recommended Animation Movies")
-    recommendations = recommend(selected_anime)
-    for anime in recommendations:
-        st.success(anime)
+    sim_scores = list(enumerate(similarity_matrix[idx]))
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:6]
+
+    anime_indices = [i[0] for i in sim_scores]
+    recommendations = df['name'].iloc[anime_indices]
+
+    st.write("Recommendations:")
+    st.write(recommendations)
+
+except Exception as e:
+    st.error("Error occurred:")
+    st.write(e)
