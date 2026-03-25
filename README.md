@@ -1,7 +1,7 @@
-# Anime Recommendation System
+# Animation movie Recommendation System
 
 ## Overview
-This project is a content-based Anime Recommendation System that recommends similar anime based on genre, rating, number of episodes, and popularity. The system uses TF-IDF feature extraction and cosine similarity to compute similarity between anime.
+This project is a content-based Animation movie Recommendation System that recommends similar animation movies based on genre, rating, number of episodes, and popularity. The system uses TF-IDF feature extraction and cosine similarity to compute similarity between animation movies.
 
 The application is deployed using Streamlit, allowing users to select an anime and receive similar anime recommendations.
 
