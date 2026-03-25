@@ -4,12 +4,20 @@ import os
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
 
+# ---------------------------
+# Page Config
+# ---------------------------
 st.set_page_config(page_title="Animation Movie Recommender", layout="wide")
 
+# ---------------------------
+# Title
+# ---------------------------
 st.title("🎬 Animation Movie Recommendation System")
-st.write("Content-Based Recommendation using Cosine Similarity")
+st.markdown("Content-Based Recommendation using Cosine Similarity")
 
-# Load data
+# ---------------------------
+# Load Data
+# ---------------------------
 @st.cache_data
 def load_data():
     data_path = os.path.join("data", "data.csv")
@@ -27,33 +35,51 @@ def load_data():
 
 df = load_data()
 
-# Prepare features
+# ---------------------------
+# Metrics
+# ---------------------------
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Total Movies", len(df))
+col2.metric("Average Rating", round(df['rating'].mean(), 2))
+col3.metric("Total Genres", df['genre'].nunique())
+
+st.markdown("---")
+
+# ---------------------------
+# Feature Scaling
+# ---------------------------
 features = df[['rating', 'episodes']]
 scaler = MinMaxScaler()
 features_scaled = scaler.fit_transform(features)
 
+# ---------------------------
 # Sidebar
-st.sidebar.title("📊 Top Rated Animation Movies")
+# ---------------------------
+st.sidebar.title("📊 Top Rated Movies")
 top_anime = df.sort_values(by="rating", ascending=False).head(5)
 st.sidebar.dataframe(top_anime[['name', 'rating']])
 
-# Dropdown
+# ---------------------------
+# Dropdown Selection
+# ---------------------------
 selected_index = st.selectbox(
-    "Select Animation Movie",
+    "🎥 Select Animation Movie",
     df.index,
     format_func=lambda x: df.loc[x, 'name']
 )
 
+# Layout
 col1, col2 = st.columns(2)
 
-# Movie details
+# Movie Details
 with col1:
-    st.subheader("🎥 Selected Animation Details")
+    st.subheader("🎬 Selected Movie Details")
     st.dataframe(df.loc[[selected_index], ['genre', 'rating', 'episodes']])
 
 # Recommendations
 with col2:
-    st.subheader("⭐ Recommended Animation Movies")
+    st.subheader("⭐ Recommended Movies")
 
     selected_vector = features_scaled[selected_index].reshape(1, -1)
     similarity_scores = cosine_similarity(selected_vector, features_scaled)
@@ -62,4 +88,10 @@ with col2:
     similar_indices = similarity_scores.argsort()[::-1][1:6]
 
     for i in similar_indices:
-        st.success(df.loc[i, 'name'])
+        score = similarity_scores[i]
+        st.progress(float(score))
+        st.write(f"{df.loc[i, 'name']}  (Score: {round(score,3)})")
+
+# Footer
+st.markdown("---")
+st.markdown("Built with Streamlit | Machine Learning Recommendation System")
