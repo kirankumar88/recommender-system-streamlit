@@ -27,23 +27,17 @@ def load_data():
 
 df = load_data()
 
-# Build similarity matrix
-@st.cache_data
-def build_similarity(df):
-    features = df[['rating', 'episodes']]
-    scaler = MinMaxScaler()
-    features_scaled = scaler.fit_transform(features)
-    similarity_matrix = cosine_similarity(features_scaled)
-    return similarity_matrix
-
-similarity_matrix = build_similarity(df)
+# Prepare features
+features = df[['rating', 'episodes']]
+scaler = MinMaxScaler()
+features_scaled = scaler.fit_transform(features)
 
 # Sidebar
 st.sidebar.title("📊 Top Rated Animation Movies")
 top_anime = df.sort_values(by="rating", ascending=False).head(5)
 st.sidebar.dataframe(top_anime[['name', 'rating']])
 
-# Dropdown using index instead of name
+# Dropdown
 selected_index = st.selectbox(
     "Select Animation Movie",
     df.index,
@@ -52,18 +46,20 @@ selected_index = st.selectbox(
 
 col1, col2 = st.columns(2)
 
+# Movie details
 with col1:
     st.subheader("🎥 Selected Animation Details")
     st.dataframe(df.loc[[selected_index], ['genre', 'rating', 'episodes']])
 
+# Recommendations
 with col2:
     st.subheader("⭐ Recommended Animation Movies")
 
-    sim_scores = list(enumerate(similarity_matrix[selected_index]))
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-    sim_scores = sim_scores[1:6]
+    selected_vector = features_scaled[selected_index].reshape(1, -1)
+    similarity_scores = cosine_similarity(selected_vector, features_scaled)
+    similarity_scores = similarity_scores.flatten()
 
-    anime_indices = [i[0] for i in sim_scores]
+    similar_indices = similarity_scores.argsort()[::-1][1:6]
 
-    for i in anime_indices:
+    for i in similar_indices:
         st.success(df.loc[i, 'name'])
