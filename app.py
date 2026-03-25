@@ -6,7 +6,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 st.set_page_config(page_title="Animation Movie Recommender", layout="wide")
 
-st.title("Animation Movie Recommendation System")
+st.title("🎬 Animation Movie Recommendation System")
+st.write("Content-Based Recommendation using Cosine Similarity")
 
 # Load data
 @st.cache_data
@@ -22,14 +23,11 @@ def load_data():
     df['genre'] = df['genre'].fillna("Unknown")
 
     df = df.reset_index(drop=True)
-
     return df
 
 df = load_data()
 
-st.write("Dataset loaded:", df.shape)
-
-# Build similarity
+# Build similarity matrix
 @st.cache_data
 def build_similarity(df):
     features = df[['rating', 'episodes']]
@@ -40,29 +38,32 @@ def build_similarity(df):
 
 similarity_matrix = build_similarity(df)
 
-st.write("Similarity matrix shape:", similarity_matrix.shape)
+# Sidebar
+st.sidebar.title("📊 Top Rated Animation Movies")
+top_anime = df.sort_values(by="rating", ascending=False).head(5)
+st.sidebar.dataframe(top_anime[['name', 'rating']])
 
-# Dropdown
-anime_list = df['name'].dropna().unique()
-selected_anime = st.selectbox("Select Animation Movie", anime_list)
+# Dropdown using index instead of name
+selected_index = st.selectbox(
+    "Select Animation Movie",
+    df.index,
+    format_func=lambda x: df.loc[x, 'name']
+)
 
-st.write("Selected:", selected_anime)
+col1, col2 = st.columns(2)
 
-# Recommendation
-try:
-    idx = df[df['name'] == selected_anime].index[0]
-    st.write("Index:", idx)
+with col1:
+    st.subheader("🎥 Selected Animation Details")
+    st.dataframe(df.loc[[selected_index], ['genre', 'rating', 'episodes']])
 
-    sim_scores = list(enumerate(similarity_matrix[idx]))
+with col2:
+    st.subheader("⭐ Recommended Animation Movies")
+
+    sim_scores = list(enumerate(similarity_matrix[selected_index]))
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
     sim_scores = sim_scores[1:6]
 
     anime_indices = [i[0] for i in sim_scores]
-    recommendations = df['name'].iloc[anime_indices]
 
-    st.write("Recommendations:")
-    st.write(recommendations)
-
-except Exception as e:
-    st.error("Error occurred:")
-    st.write(e)
+    for i in anime_indices:
+        st.success(df.loc[i, 'name'])
