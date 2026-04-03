@@ -5,6 +5,8 @@ This project is a content-based Animation movie Recommendation System that recom
 
 The application is deployed using Streamlit, allowing users to select an anime and receive similar anime recommendations.
 
+App_Link : https://recommender-system-app-nq3ir562ebypweokweb9yc.streamlit.app/
+
 ---
 
 ## Features
